@@ -22,8 +22,8 @@
         "@babel/core": "^7.17.10"
     },
     "scripts": {
-        "start": "PORT=8081 react-scripts start",
-        "build": "react-scripts build",
+        "start": "NODE_OPTIONS=--openssl-legacy-provider PORT=8081 react-scripts start",
+        "build": "NODE_OPTIONS=--openssl-legacy-provider react-scripts build",
         "test": "react-scripts test",
         "eject": "react-scripts eject"
     },

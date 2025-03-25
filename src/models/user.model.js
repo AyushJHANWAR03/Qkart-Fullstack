@@ -46,6 +46,13 @@ const userSchema = mongoose.Schema(
       type: String,
       default: config.default_address,
     },
+    addresses: [{
+      address: {
+        type: String,
+        required: true,
+        trim: true,
+      }
+    }],
   },
   {
     timestamps: true,
@@ -90,7 +97,7 @@ userSchema.methods.isPasswordMatch = async function (password, userPassword) {
  */
 userSchema.methods.hasSetNonDefaultAddress = async function () {
   const user = this;
-  return user.address !== config.default_address;
+  return user.addresses && user.addresses.length > 0;
 };
 
 /*

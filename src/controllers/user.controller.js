@@ -97,7 +97,77 @@ const setAddress = catchAsync(async (req, res) => {
   });
 });
 
+/**
+ * Get user addresses
+ * @param {Object} req
+ * @param {Object} res
+ * @param {Function} next
+ * @returns {Promise<User>}
+ */
+const getAddresses = catchAsync(async (req, res, next) => {
+  const user = await userService.getUserById(req.params.userId);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+  if (user._id.toString() !== req.user._id.toString()) {
+    throw new ApiError(httpStatus.FORBIDDEN, "User not found");
+  }
+  res.send({ addresses: user.addresses || [] });
+});
+
+/**
+ * Add new address
+ * @param {Object} req
+ * @param {Object} res
+ * @param {Function} next
+ * @returns {Promise<User>}
+ */
+const addAddress = catchAsync(async (req, res, next) => {
+  const user = await userService.getUserById(req.params.userId);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+  if (user._id.toString() !== req.user._id.toString()) {
+    throw new ApiError(httpStatus.FORBIDDEN, "User not found");
+  }
+  if (!req.body.address || req.body.address.length < 20) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Address should be greater than 20 characters");
+  }
+  user.addresses = user.addresses || [];
+  user.addresses.push({ address: req.body.address });
+  await user.save();
+  res.send({ success: true });
+});
+
+/**
+ * Delete address
+ * @param {Object} req
+ * @param {Object} res
+ * @param {Function} next
+ * @returns {Promise<User>}
+ */
+const deleteAddress = catchAsync(async (req, res, next) => {
+  const user = await userService.getUserById(req.params.userId);
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+  if (user._id.toString() !== req.user._id.toString()) {
+    throw new ApiError(httpStatus.FORBIDDEN, "User not found");
+  }
+  user.addresses = user.addresses || [];
+  const addressIndex = user.addresses.findIndex(addr => addr._id.toString() === req.params.addressId);
+  if (addressIndex === -1) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Address to delete was not found");
+  }
+  user.addresses.splice(addressIndex, 1);
+  await user.save();
+  res.send({ success: true });
+});
+
 module.exports = {
   getUser,
   setAddress,
+  getAddresses,
+  addAddress,
+  deleteAddress,
 };

@@ -139,7 +139,7 @@ class Search extends React.Component {
     });
 
     try {
-      response = await (await fetch(`${config.endpoint}/products`)).json();
+      response = await (await fetch(`${config.endpoint}/v1/products`)).json();
     } catch (e) {
       errored = true;
     }

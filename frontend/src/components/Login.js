@@ -132,7 +132,7 @@ class Login extends React.Component {
     });
     try {
       response = await (
-        await fetch(`${config.endpoint}/auth/login`, {
+        await fetch(`${config.endpoint}/v1/auth/login`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -172,6 +172,7 @@ class Login extends React.Component {
    * -    `userId` field in localStorage can be used to store the user ID
    */
   persistLogin = (token, email, balance, name, userId) => {
+    console.log('Storing user ID:', userId);
     localStorage.setItem("token", token);
     localStorage.setItem("email", email);
     localStorage.setItem("balance", balance);

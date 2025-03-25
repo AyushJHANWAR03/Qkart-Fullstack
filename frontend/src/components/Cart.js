@@ -123,9 +123,8 @@ export default class Cart extends React.Component {
 
     try {
       response = await (
-        await fetch(`${config.endpoint}/cart`, {
+        await fetch(`${config.endpoint}/v1/cart`, {
           method: "GET",
-
           headers: {
             Authorization: `Bearer ${this.props.token}`,
           },
@@ -189,7 +188,7 @@ export default class Cart extends React.Component {
 
     try {
       response = await (
-        await fetch(`${config.endpoint}/cart`, {
+        await fetch(`${config.endpoint}/v1/cart`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${this.props.token}`,
@@ -224,7 +223,7 @@ export default class Cart extends React.Component {
     });
 
     try {
-      let response_object = await fetch(`${config.endpoint}/cart`, {
+      let response_object = await fetch(`${config.endpoint}/v1/cart`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${this.props.token}`,

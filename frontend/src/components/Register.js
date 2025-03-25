@@ -145,7 +145,7 @@ class Register extends React.Component {
     });
     try {
       response = await (
-        await fetch(`${config.endpoint}/auth/register`, {
+        await fetch(`${config.endpoint}/v1/auth/register`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

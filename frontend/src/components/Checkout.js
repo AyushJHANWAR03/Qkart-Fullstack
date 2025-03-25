@@ -32,8 +32,8 @@ import Header from "./Header";
  *    Reference to Cart component (to trigger certain methods within the cart component)
  * @property {Product[]} state.products
  *    List of products fetched from backend
- * @property {Address[]} state.address
- *    List of user's address fetched from backend
+ * @property {Address[]} state.addresses
+ *    List of user's addresses fetched from backend
  * @property {number} state.selectedAddressIndex
  *    Index for which of the user's addresses is currently selected
  * @property {string} state.newAddress
@@ -49,7 +49,7 @@ class Checkout extends React.Component {
     this.cartRef = React.createRef();
     this.state = {
       products: [],
-      address: "",
+      addresses: [],
       selectedAddressIndex: 0,
       newAddress: "",
       balance: 0,
@@ -138,7 +138,7 @@ class Checkout extends React.Component {
     });
 
     try {
-      response = await (await fetch(`${config.endpoint}/products`)).json();
+      response = await (await fetch(`${config.endpoint}/v1/products`)).json();
     } catch (e) {
       errored = true;
     }
@@ -223,6 +223,8 @@ class Checkout extends React.Component {
   getAddresses = async () => {
     let response = {};
     let errored = false;
+    const userId = localStorage.getItem("userId");
+    console.log('Getting addresses for user ID:', userId);
 
     this.setState({
       loading: true,
@@ -231,9 +233,7 @@ class Checkout extends React.Component {
     try {
       response = await (
         await fetch(
-          `${config.endpoint}/users/${localStorage.getItem(
-            "userId"
-          )}?q=address`,
+          `${config.endpoint}/v1/users/${userId}/addresses`,
           {
             method: "GET",
             headers: {
@@ -242,8 +242,10 @@ class Checkout extends React.Component {
           }
         )
       ).json();
+      console.log('Get addresses response:', response);
     } catch (e) {
       errored = true;
+      console.error('Error getting addresses:', e);
     }
 
     this.setState({
@@ -252,9 +254,9 @@ class Checkout extends React.Component {
 
     if (this.validateResponse(errored, response, "fetch addresses")) {
       if (response) {
+        console.log('Setting addresses in state:', response.addresses);
         this.setState({
-          address:
-            response.address !== "ADDRESS_NOT_SET" ? response.address : "",
+          addresses: response.addresses || [],
         });
       }
     }
@@ -291,6 +293,9 @@ class Checkout extends React.Component {
   addAddress = async () => {
     let response = {};
     let errored = false;
+    const userId = localStorage.getItem("userId");
+    console.log('Adding address for user ID:', userId);
+    console.log('New address to add:', this.state.newAddress);
 
     this.setState({
       loading: true,
@@ -299,11 +304,9 @@ class Checkout extends React.Component {
     try {
       response = await (
         await fetch(
-          `${config.endpoint}/users/${localStorage.getItem(
-            "userId"
-          )}?q=address`,
+          `${config.endpoint}/v1/users/${userId}/addresses`,
           {
-            method: "PUT",
+            method: "POST",
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,
               "Content-Type": "application/json",
@@ -314,8 +317,10 @@ class Checkout extends React.Component {
           }
         )
       ).json();
+      console.log('Add address response:', response);
     } catch (e) {
       errored = true;
+      console.error('Error adding address:', e);
     }
 
     this.setState({
@@ -325,11 +330,9 @@ class Checkout extends React.Component {
     if (this.validateResponse(errored, response, "add a new address")) {
       if (response) {
         message.success("Address added");
-
         this.setState({
           newAddress: "",
         });
-
         await this.getAddresses();
       }
     }
@@ -376,7 +379,7 @@ class Checkout extends React.Component {
 
     try {
       response = await (
-        await fetch(`${config.endpoint}/user/addresses/${addressId}`, {
+        await fetch(`${config.endpoint}/v1/users/${localStorage.getItem("userId")}/addresses/${addressId}`, {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -394,7 +397,6 @@ class Checkout extends React.Component {
     if (this.validateResponse(errored, response, "delete address")) {
       if (response) {
         message.success("Address deleted");
-
         await this.getAddresses();
       }
     }
@@ -438,16 +440,28 @@ class Checkout extends React.Component {
     });
 
     try {
-      response = await fetch(`${config.endpoint}/cart/checkout`, {
+      const selectedAddress = this.state.addresses[this.state.selectedAddressIndex];
+      console.log('Selected address:', selectedAddress);
+      console.log('Selected address index:', this.state.selectedAddressIndex);
+      console.log('All addresses:', this.state.addresses);
+
+      const requestBody = {
+        addressId: selectedAddress._id
+      };
+      console.log('Checkout request body:', requestBody);
+
+      response = await fetch(`${config.endpoint}/v1/cart/checkout`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("token")}`,
           "Content-Type": "application/json",
         },
+        body: JSON.stringify(requestBody),
       });
+      console.log('Checkout response status:', response.status);
     } catch (e) {
       errored = true;
-      console.log(e);
+      console.error('Error during checkout:', e);
     }
 
     this.setState({
@@ -457,11 +471,15 @@ class Checkout extends React.Component {
     let data;
     if (response.status !== 204) {
       data = await response.json();
+      console.log('Checkout response data:', data);
     }
     if (response.status === 204 || this.validateResponse(errored, data)) {
       message.success("Order placed");
 
-      console.log(this.cartRef.current.calculateTotal());
+      const total = this.cartRef.current.calculateTotal();
+      console.log('Order total:', total);
+      console.log('Current balance:', localStorage.getItem("balance"));
+
       localStorage.setItem(
         "balance",
         parseInt(localStorage.getItem("balance")) -
@@ -479,6 +497,30 @@ class Checkout extends React.Component {
    * -    Else call the checkout() method to proceed with placing and order
    */
   order = () => {
+    console.log('Order method called');
+    console.log('Current addresses:', this.state.addresses);
+    console.log('Selected address index:', this.state.selectedAddressIndex);
+    console.log('Current balance:', this.state.balance);
+
+    if (!this.state.addresses.length) {
+      message.error("Please add a new address before proceeding.");
+      return;
+    }
+
+    const total = this.cartRef.current.calculateTotal();
+    console.log('Cart total:', total);
+    if (total > this.state.balance) {
+      message.error(
+        "You do not have enough balance in your wallet for this purchase"
+      );
+      return;
+    }
+
+    if (!this.state.addresses[this.state.selectedAddressIndex]) {
+      message.error("Please select a valid address");
+      return;
+    }
+
     this.checkout();
   };
 
@@ -541,80 +583,52 @@ class Checkout extends React.Component {
 
                 {/* Display the "Shipping" sectino */}
                 <div className="address-section">
-                  {this.state.address.length ? (
-                    <div className="address-box">
-                      {/* Display address title */}
-                      <div className="address-text">{this.state.address}</div>
-
-                      {/* Display button to delete address from user's list */}
-                      {/* <Button
+                  {this.state.addresses.length > 0 ? (
+                    <Radio.Group
+                      className="addresses"
+                      defaultValue={this.state.selectedAddressIndex}
+                      onChange={(e) => {
+                        this.setState({
+                          selectedAddressIndex: e.target.value,
+                        });
+                      }}
+                    >
+                      <Row>
+                        {this.state.addresses.map((address, index) => (
+                          <Col xs={24} lg={12} key={address._id}>
+                            <div className="address">
+                              <Radio.Button value={index}>
+                                <div className="address-box">
+                                  <div className="address-text">
+                                    {address.address}
+                                  </div>
+                                  <Button
                                     type="primary"
-                                    
-                                    onClick={async () => {
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
                                       await this.deleteAddress(address._id);
                                     }}
-                                    
                                   >
                                     Delete
-                                  </Button> */}
-                    </div>
+                                  </Button>
+                                </div>
+                              </Radio.Button>
+                            </div>
+                          </Col>
+                        ))}
+                      </Row>
+                    </Radio.Group>
                   ) : (
-                    // Display the list of addresses as radio buttons
-                    // <Radio.Group
-                    //   className="addresses"
-                    //   defaultValue={this.state.selectedAddressIndex}
-                    //   onChange={e => {
-                    //     this.setState({
-                    //       selectedAddressIndex: e.target.value
-                    //     });
-                    //   }}
-                    // >
-                    //   <Row>
-                    //     {/* Create a view for each of the user's addresses */}
-                    //     {this.state.address && (
-                    //       <Col xs={24} lg={12} key={"address"}>
-                    //         <div className="address">
-                    //           <Radio.Button value={"address#1"}>
-                    //             <div className="address-box">
-                    //               {/* Display address title */}
-                    //               <div className="address-text">
-                    //                 {this.state.address}
-                    //               </div>
-
-                    //               {/* Display button to delete address from user's list */}
-                    //               {/* <Button
-                    //                 type="primary"
-
-                    //                 onClick={async () => {
-                    //                   await this.deleteAddress(address._id);
-                    //                 }}
-
-                    //               >
-                    //                 Delete
-                    //               </Button> */}
-                    //             </div>
-                    //           </Radio.Button>
-                    //         </div>
-                    //       </Col>
-                    //     )}
-                    //   </Row>
-                    // </Radio.Group>
-                    // Display static text banner if no addresses are added
                     <div className="red-text checkout-row">
                       No addresses found. Please add one to proceed.
                     </div>
                   )}
 
                   <div className="checkout-row">
-                    {/* Text input field to type a new address */}
                     <div>
                       <TextArea
                         className="new-address"
-                        placeholder={
-                          this.state.address
-                            ? "Update Address"
-                            : "Add new address"
-                        }
+                        placeholder="Add new address"
                         rows={4}
                         value={this.state.newAddress}
                         onChange={(e) => {
@@ -624,13 +638,9 @@ class Checkout extends React.Component {
                         }}
                       />
                     </div>
-
-                    {/* Button to submit address added */}
                     <div>
                       <Button type="primary" onClick={this.addAddress}>
-                        {this.state.address
-                          ? "Update Address"
-                          : "Add new address"}
+                        Add new address
                       </Button>
                     </div>
                   </div>

@@ -1,1 +1,4 @@
-{"workspaceIp": "65.1.16.6"}
+{
+  "workspaceIp": "65.1.16.6",
+  "endpoint": "http://localhost:8082"
+}

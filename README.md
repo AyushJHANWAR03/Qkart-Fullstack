@@ -1,70 +1,115 @@
+# QKart - E-commerce Platform
 
-# QKart Backend
+A full-stack e-commerce platform built with Node.js, Express, MongoDB, and React.
 
-QKart is an E-commerce application offering a variety of products for customers to choose from. 
+## Features
 
-## Links
+- User authentication (login/register)
+- Product browsing and search
+- Shopping cart functionality
+- Address management
+- Order placement
+- Wallet system
 
-**Frontend**: https://a-krishnakundan-qkart-backend.netlify.app/
+## Prerequisites
 
-**Backend**: https://qkart-backend-re47.onrender.com
+- Node.js (v14 or higher)
+- MongoDB (v4.4 or higher)
+- npm or yarn
 
-During the course of this project,
+## Setup Instructions
 
-• Built the complete set of REST APIs for an E-commerce application following the best practices
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/qkart.git
+cd qkart
+```
 
-• Followed a layered approach for easy maintenance
+2. Install dependencies:
+```bash
+# Install backend dependencies
+npm install
 
-• Used MongoDB NoSQL database for data storage
+# Install frontend dependencies
+cd frontend
+npm install
+cd ..
+```
 
-• Implemented multiple authentication schemes
+3. Set up environment variables:
+```bash
+# Copy the example env file
+cp .env.example .env
+```
 
-• Wrote unit and integration tests to test the implementation
+4. Start MongoDB:
+```bash
+# Make sure MongoDB is running on your system
+# On macOS/Linux:
+mongod
 
-![image](https://github.com/AKrishnaKundan/QKART_BACKEND/assets/93312488/e88ab658-fd91-4f12-9da1-f0c905899040)
+# On Windows:
+net start MongoDB
+```
 
-**QKart Layered Architecture**
+5. Import initial data:
+```bash
+# Run the data import script
+node src/scripts/importData.js
+```
 
-## Set up application and implemented the first API
-• Implemented `GET /v1/users` API endpoint to send user data to clients
+6. Start the application:
+```bash
+# Start backend server (in one terminal)
+npm start
 
-• Used Mongoose (Node.js-MongoDB ODM) to fetch user data from MongoDB
+# Start frontend development server (in another terminal)
+cd frontend
+npm start
+```
 
-• Defined JOI schema to easily validate client requests
+The application will be available at:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8082
 
-• Utilized middlewares to reduce code duplication
+## Default User Credentials
 
+You can use these credentials to test the application:
+- Email: crio-user@gmail.com
+- Password: criouser123
 
-## Secured API endpoints and implemented register/login APIs
+## API Endpoints
 
-• Implemented logic to generate short-lived JWT tokens
+### Authentication
+- POST /v1/auth/register - Register a new user
+- POST /v1/auth/login - Login user
 
-• Set token authentication strategy by using the Passport library
+### Products
+- GET /v1/products - Get all products
+- GET /v1/products/:id - Get product by ID
 
-• Secured `GET /v1/users` endpoint using token authentication
+### Cart
+- GET /v1/cart - Get user's cart
+- POST /v1/cart - Add product to cart
+- PUT /v1/cart - Update product quantity
+- DELETE /v1/cart/:productId - Remove product from cart
+- PUT /v1/cart/checkout - Checkout cart
 
-• Created POST APIs for user registration and login
+### User
+- GET /v1/users/:userId - Get user details
+- PUT /v1/users/:userId - Update user address
+- GET /v1/users/:userId/addresses - Get user's addresses
+- POST /v1/users/:userId/addresses - Add new address
+- DELETE /v1/users/:userId/addresses/:addressId - Delete address
 
-• Implemented password authentication to facilitate register / login flow
+## Contributing
 
-![image](https://github.com/AKrishnaKundan/QKART_BACKEND/assets/93312488/2568dd5c-b388-4166-9d86-cfea06463ee6)
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-JWT Token authentication flow for QKart APIs
+## License
 
-## Implemented APIs related to shopping cart
-• Implemented the GET/POST/PUT API endpoints for a user’s shopping cart
-
-• Improved the `GET /v1/users` endpoint by supporting filtering for user address via query parameters
-## Completed the checkout logic using TDD
-• Added Jest-based assertions to unit tests for checkout requirements provided
-
-• Implemented the checkout logic in a Test-driven development style
-
-• Utilized integration tests to find and resolve bugs on integrating checkout logic to the application
-## Deployment
-
-**Database**: MongoDB Atlas cloud
-
-**Frontend:** Netlify
-
-**Backend:** Render
+This project is licensed under the MIT License - see the LICENSE file for details.
